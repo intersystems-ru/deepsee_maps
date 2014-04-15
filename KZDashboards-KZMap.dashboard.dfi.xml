@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Document name="KZDashboards-KZMap.dashboard.DFI">
+<dashboard xmlns="http://www.intersystems.com/deepsee/library" name="KZMap" folderName="KZDashboards" title="" description="" keywords="" owner="" shared="true" public="true" locked="false" resource="" timeCreated="2013-07-04T05:29:56.446Z" createdBy="ilson" category="" bookCover="" scheme="" worklistCount="0" snapTo="true" snapGrid="true" gridRows="10" gridCols="10" canResize="true" canModify="true" showTitleBar="true" companyName="" companyLogo="" companyStyle="">
+  <widget name="MapW" type="portlet" subtype="KZ.MapPortlet" subtypeClass="" title="Казахстан" dataSource="KZMapKPI.kpi" dataLink="" drillDownDataSource="" width="200" height="200" sidebarContent="" showSidebar="false" sidebarWidth="" maximized="false" homeRowL="0" homeColL="0" colSpanL="7" rowSpanL="10" showToolbar="true" theme="" dataColorList="">
+    <control name="" action="applyFilter" target="*" targetProperty="ParentGuid" location="widget" type="hidden" controlClass="" label="ParentGuid" title="" value="" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <control name="" action="applyFilter" target="*" targetProperty="ParameterName" location="widget" type="dropdown" controlClass="" label="Параметр" title="" value="Население" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <control name="" action="applyFilter" target="" targetProperty="PolygonsMarkers" location="widget" type="dropdown" controlClass="" label="Вариант отображения" title="" value="Polygons" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <property name="colorProperty"></property>
+    <property name="coordsJsFile">polygonsKZ.js</property>
+    <property name="coordsProperty">Guid</property>
+    <property name="fillOpacity">0.6</property>
+    <property name="getAdditionInfoForObjectById">KZ.ParameterValue;GetParametersData</property>
+    <property name="getBordersMethod">KZ.Borders;GetBorders</property>
+    <property name="hoverOpacity">0.4</property>
+    <property name="latitude">49</property>
+    <property name="latitudeProperty">Latitude</property>
+    <property name="longitude">66</property>
+    <property name="longitudeProperty">Longitude</property>
+    <property name="markerDataProperties">Name,Guid,DefaultZoom,CanDrillDown,Value,ParameterId,Level,CenterName,SpecialIcon</property>
+    <property name="markerIcon">http://i.imgur.com/pBB7MYT.png</property>
+    <property name="markerSpecialIcon">http://i.imgur.com/bFJRQfv.png</property>
+    <property name="markerSpecialProperty">SpecialIcon</property>
+    <property name="markerTitleProperty">Name</property>
+    <property name="onclickmarker"><![CDATA[
+    	if (marker.data.CanDrillDown == 1) 
+   		{ 
+   			for (var n = 0; n < zenThis._polygons.length; n++) 
+			{
+				var poly = zenThis._polygons[n];
+				if (poly.data.Guid == marker.data.Guid)
+				{
+					zenInvokeCallbackMethod(zenThis.onclickpolygon,zenThis,'onclickpolygon','polygon',poly,'position', marker.position);
+				}
+			} 
+   		} 
+   		else 
+   		{ 
+			zenInvokeCallbackMethod(zenThis.onrightclickpolygon,zenThis,'onrightclickpolygon','polygon', {data: marker.data},'position', marker.position);
+		}
+    ]]></property>
+    <property name="onclickpolygon"><![CDATA[    	
+    if(!zenThis.lastPolygon)     		
+        zenThis.lastPolygon=[];    	 				  		
+     
+     zenThis.drillDown(polygon.data.Name, position, polygon.data.DefaultZoom, {Guid: polygon.data.Guid, Level: polygon.data.Level});   		  		
+     
+     if (zenThis.lastPolygon.length > 0)
+     {
+		 zenThis.lastPolygon[zenThis.lastPolygon.length - 1].setVisible(false);
+     }
+      		    	
+     zenThis.currPolygon = new google.maps.Polygon({zIndex: 99, fillOpacity: 0.01, strokeColor: 'rgb(0,0,0)', strokeOpacity: 0.4, paths: polygon.getPaths(), clickable: false, map: zenThis.getMapObject()});    	
+     zenThis.lastPolygon.push(zenThis.currPolygon);    
+    ]]></property>
+    <property name="ondrilldown">
+   		if(!zenThis.lastGuid)
+   		{ 
+    		zenThis.lastGuid = [];
+    		zenThis.lastLevel = [];
+    		zenThis.currGuid = '';
+    		zenThis.currName = '';
+    		zenThis.currLevel = '';
+   		}
+   		
+   		zenThis.lastLevel.push(zenThis.currLevel);  
+   		zenThis.lastGuid.push(zenThis.currGuid);
+   		
+   		zenThis.currLevel = data.Level;
+   		zenThis.currGuid = data.Guid;
+   		
+   		zenThis._sliderRangeData.currGuid = data.Guid;
+   		zenPage.dashboardEventHandler(zenThis,'click', zenThis.currGuid, 'applyFilter', '*', 'ParentGuid');  		 
+   	</property>
+    <property name="ondrillup"><![CDATA[	
+    	if (zenThis.lastGuid)  
+		{  
+			zenThis.currGuid = zenThis.lastGuid.pop();
+			zenThis.currLevel = zenThis.lastLevel.pop();
+  			zenThis.currPolygon = zenThis.lastPolygon.pop();
+  			
+			zenThis._sliderRangeData.currGuid = zenThis.currGuid;
+			zenPage.dashboardEventHandler(zenThis,'click', zenThis.currGuid, 'applyFilter', '*', 'ParentGuid');          
+	
+	  		if (zenThis.lastPolygon.length > 0)
+            {
+		        zenThis.lastPolygon[zenThis.lastPolygon.length - 1].setVisible(true);
+            }
+            
+			if (zenThis.currPolygon)          
+				zenThis.currPolygon.setMap(null);
+		}
+	]]></property>
+    <property name="onrightclickmarker">
+     zenInvokeCallbackMethod(zenThis.onrightclickpolygon,zenThis,'onrightclickpolygon','polygon', {data: marker.data},'position', marker.position);
+    </property>
+    <property name="onrightclickpolygon"><![CDATA[ 
+    
+  		var content = '<div style="font-size: 12px; font-family:arial;"><span style="font-weight: bold;">' + polygon.data.Name + '</span><br>';    
+    	if(polygon.data.Level==0 || polygon.data.Level==1){
+    		content += polygon.data.CenterName ? ('<br>Административный центр: ' + polygon.data.CenterName + '<br>') : '';    		
+    	}
+    	
+    	var otherInfo = zenThis.GetAdditionInformationForObjectById(polygon.data.Guid);
+ 		otherInfo.parameters = otherInfo.parameters.split(';');
+ 		otherInfo.unitNames = otherInfo.unitNames.split(';');
+ 		otherInfo.values = otherInfo.values.split(';');
+ 		
+    	for (var i=0; i < otherInfo.parameters.length-1; i++){
+    		content += '<br>' + otherInfo.parameters[i] + ': ' + zenThis.beatNumber(otherInfo.values[i]) + ' ' + otherInfo.unitNames[i]; 
+    	}
+    
+    	zenThis.openInfoWindowAtPosition(position, content + '</div>');
+    	
+    ]]></property>
+    <property name="polygonDataProperties">Name,Guid,DefaultZoom,CanDrillDown,Value,DataUrl,ParameterId,Level,CenterName</property>
+    <property name="polygonTitleProperty">Name</property>
+    <property name="saveBordersMethod">KZ.Borders;SaveBorders</property>
+    <property name="strokeOpacity">1</property>
+    <property name="strokeWeight">1</property>
+    <property name="zoom">5</property>
+  </widget>
+  <widget name="TopW" type="pivot" subtype="barChart" subtypeClass="barChart" title="Упорядоченный список областей / районов по значению выбранного параметра" dataSource="KZTopChart.kpi" dataLink="" drillDownDataSource="" width="200" height="200" sidebarContent="" showSidebar="false" sidebarWidth="" maximized="false" homeRowL="0" homeColL="7" colSpanL="3" rowSpanL="10" showToolbar="true" theme="" dataColorList="">
+    <control name="" action="applyFilter" target="" targetProperty="ParentGuid" location="widget" type="hidden" controlClass="" label="ParentGuid" title="" value="" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <control name="" action="applyFilter" target="" targetProperty="ParameterName" location="widget" type="hidden" controlClass="" label="ParameterName" title="" value="" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <control name="" action="applyFilter" target="" targetProperty="TopNumber" location="widget" type="dropdown" controlClass="" label="Размер списка" title="" value="20" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <control name="" action="refresh" target="" targetProperty="" location="widget" type="timer" controlClass="" timeout="10" label="" title="" value="" text="" readOnly="false" valueList="" displayList="" activeWhen=""></control>
+    <dataProperty name="Значение" label="Значение" width="" align="" subtype="" style="" display="" format="" showAs="" valueColumn="false" summary="" summaryValue="" dataValue="Value" targetValue="" thresholdLower="" thresholdUpper="" rangeLower="" rangeUpper="" baseValue="" override=""></dataProperty>
+    <property name="chartToggle">chart</property>
+    <property name="initialExecute">1</property>
+    <property name="legendPos">none</property>
+    <override name="barChart">{legendVisible:'false',seriesColorScheme:'pastel',stripeStyle:'stroke-width:0;fill:transparent;',xAxis:{majorGridLines:false,_type:'axis'},yAxisList:[{labelPosition:'left',_type:'axis'}],chartPivot:true,_type:'barChart'}</override>
+    <override name="legend">{hidden:true,legendLabels:'Name,Value',legendPosition:'right',_type:'chartLegend'}</override>
+    <override name="pivot">{cellWidth:'220',columnList:'Value',crossJoinRowLimit:2000,currListingPage:1,currPage:1,kpi:'KZ.KPI.Top',listingFields:[],listingSelect:'multi',pivotVariables:{},showRowCaption:false,_type:'pivotTable'}</override>
+  </widget>
+</dashboard>
+</Document></Export>

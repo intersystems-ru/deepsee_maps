@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="KZ.ParameterValue">
+<Super>%Persistent,%XML.Adaptor</Super>
+<TimeCreated>63221,70223.897019</TimeCreated>
+
+<Property name="Area">
+<Description>
+State, county or city</Description>
+<Type>Area</Type>
+<Cardinality>one</Cardinality>
+<Inverse>Parameters</Inverse>
+<Relationship>1</Relationship>
+<Parameter name="XMLPROJECTION" value="XELEMENT"/>
+<Parameter name="XMLREFERENCE" value="ID"/>
+</Property>
+
+<Property name="Parameter">
+<Description>
+Parameter</Description>
+<Type>Parameter</Type>
+<Cardinality>one</Cardinality>
+<Inverse>Values</Inverse>
+<Relationship>1</Relationship>
+<Parameter name="XMLPROJECTION" value="XELEMENT"/>
+<Parameter name="XMLREFERENCE" value="ID"/>
+</Property>
+
+<Property name="Value">
+<Description>
+Value for region|county|city</Description>
+<Type>%Float</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="PVIdx">
+<Properties>Area,Parameter</Properties>
+</Index>
+
+<Method name="GetParametersData">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>guid:%String</FormalSpec>
+<ReturnType>%ZEN.proxyObject</ReturnType>
+<Implementation><![CDATA[
+	set result = ##class(%ZEN.proxyObject).%New()
+	set result.parameters = ""
+	set result.unitNames = ""
+	set result.values = ""
+	
+	&sql(DECLARE PCur CURSOR FOR 
+		 SELECT Parameter->Name, Parameter->UnitName, Value  
+		 FROM KZ.ParameterValue
+		 WHERE Area = :guid)	
+		 
+	&sql(OPEN PCur)
+	for  
+	{
+		&sql(FETCH PCur INTO :paramName, :paramUnitName, :paramValue) 
+		quit:(SQLCODE '= 0)
+		
+		if (paramValue = 0)
+		{
+			set paramValue = "нет данных"
+			set paramUnitName = ""
+		}
+		else
+		{
+			set paramValue = $NUMBER(paramValue,3)
+		}
+		
+		set result.parameters = result.parameters_paramName_";"
+		set result.unitNames = result.unitNames_paramUnitName_";"
+		set result.values = result.values_paramValue_";"
+	}
+	
+	&sql(CLOSE PCur)
+	
+	quit result
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^KZ.ParameterValueD</DataLocation>
+<DefaultData>ParameterValueDefaultData</DefaultData>
+<IdLocation>^KZ.ParameterValueD</IdLocation>
+<IndexLocation>^KZ.ParameterValueI</IndexLocation>
+<StreamLocation>^KZ.ParameterValueS</StreamLocation>
+<ExtentSize>100000</ExtentSize>
+<Data name="ParameterValueDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Area</Value>
+</Value>
+<Value name="3">
+<Value>Parameter</Value>
+</Value>
+<Value name="4">
+<Value>Value</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+</Export>

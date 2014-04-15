@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="KZ.Borders">
+<Description>
+Borders for polygons</Description>
+<Super>%Persistent</Super>
+<TimeCreated>63223,60526.79831</TimeCreated>
+
+<Property name="ParentRegion">
+<Description>
+ParentRegion guid or string-'NULL' if level=0</Description>
+<Type>%String</Type>
+<Required>1</Required>
+</Property>
+
+<Property name="Parameter">
+<Description>
+Parameter</Description>
+<Type>KZ.Parameter</Type>
+<Required>1</Required>
+</Property>
+
+<Property name="HLevel">
+<Description>
+Level</Description>
+<Type>%Integer</Type>
+<Required>1</Required>
+</Property>
+
+<Property name="Minimum">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Maximum">
+<Type>%Integer</Type>
+</Property>
+
+<Index name="BordersIdx">
+<Properties>ParentRegion,Parameter,HLevel</Properties>
+<Unique>1</Unique>
+</Index>
+
+<Method name="GetBorders">
+<Description>
+Get borders values for polygons whose parent GUID = parentRegionId</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>data:%RegisteredObject</FormalSpec>
+<ReturnType>%ZEN.proxyObject</ReturnType>
+<Implementation><![CDATA[
+	set bordersData = ##class(%ZEN.proxyObject).%New()
+	set bordersData.maxValue = 10000
+	set bordersData.minValue = 0
+	set bordersData.unitName = "-"
+
+	if (data.parentRegionId="") set data.parentRegionId = "NULL"
+	
+	try{
+		if (..BordersIdxExists(data.parentRegionId, data.parameterId, data.level) = 1){
+			set border = ..BordersIdxOpen(data.parentRegionId, data.parameterId, data.level)
+		}
+		else{
+			set minVal=0, maxVal=10000
+			
+			if (data.parentRegionId = "NULL"){
+				&sql(SELECT Min(Value), Max(Value) INTO :minVal,:maxVal
+					 FROM KZ.Region as reg INNER JOIN
+					 KZ.ParameterValue as pv ON reg.ID = pv.Area
+					 WHERE reg.HLevel=:data.level AND pv.Parameter=:data.parameterId )
+			}
+			else{
+				&sql(SELECT Min(Value), Max(Value) INTO :minVal,:maxVal
+					 FROM KZ.Region as reg INNER JOIN
+					 KZ.ParameterValue as pv ON reg.ID = pv.Area
+					 WHERE reg.HLevel=:data.level AND pv.Parameter=:data.parameterId AND reg.ParentRegion=:data.parentRegionId)
+			}
+			 
+			set border = ..%New()
+			set border.ParentRegion = data.parentRegionId
+			set border.Parameter = ##class(KZ.Parameter).%OpenId(data.parameterId)
+			set border.HLevel = data.level
+			set border.Maximum = maxVal
+			set border.Minimum = minVal
+			do border.%Save()
+		}
+		
+		set bordersData.minValue = border.Minimum
+		set bordersData.maxValue = border.Maximum
+		set bordersData.unitName = border.Parameter.UnitName
+	}
+	catch (ex)
+	{
+		
+	}
+		
+	quit bordersData
+]]></Implementation>
+</Method>
+
+<Method name="SaveBorders">
+<Description>
+Update values for border</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>data:%RegisteredObject</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set st = $$$OK
+	try{
+		if (data.parentRegionId="") set data.parentRegionId = "NULL"
+		set brd = ..BordersIdxOpen(data.parentRegionId, data.parameterId, data.level)
+		set brd.Maximum = data.maxValue
+		set brd.Minimum = data.minValue
+		set st = brd.%Save()
+	}
+	catch(ex){
+		set st = ex.AsStatus()
+	}
+	quit st
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^KZ.BordersD</DataLocation>
+<DefaultData>BordersDefaultData</DefaultData>
+<IdLocation>^KZ.BordersD</IdLocation>
+<IndexLocation>^KZ.BordersI</IndexLocation>
+<StreamLocation>^KZ.BordersS</StreamLocation>
+<ExtentSize>100000</ExtentSize>
+<Data name="BordersDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>ParentRegion</Value>
+</Value>
+<Value name="3">
+<Value>Parameter</Value>
+</Value>
+<Value name="4">
+<Value>HLevel</Value>
+</Value>
+<Value name="5">
+<Value>Minimum</Value>
+</Value>
+<Value name="6">
+<Value>Maximum</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+</Export>

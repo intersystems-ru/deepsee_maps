@@ -1,3 +1,12 @@
+<cspapp>/KZ.css
+<cspapp>/KZ.js
+<cspapp>/KZ_3.css
+<cspapp>/SA.css
+<cspapp>/SA.js
+<cspapp>/SA_3.css
+<cspapp>/polygonsKZ.js
 <cspapp>/polygonsSA.js
+KZ.PKG
+KZDashboards-KZMap.dashboard.DFI
 SA.PKG
 SADashboards-SAMap.dashboard.DFI
